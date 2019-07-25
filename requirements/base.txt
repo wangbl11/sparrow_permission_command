@@ -1,0 +1,2 @@
+requests==2.12.1
+coreapi==2.3.3
