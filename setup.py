@@ -36,6 +36,7 @@ python_classifiers = [
 def sparrow_permission_command_setup(**kwargs):
     setup(
         name='sparrow_permission_command',
+        version='v1.0',
         packages=find_packages('command'),
         package_dir={'': 'command'},
         include_package_data=True,
@@ -43,11 +44,11 @@ def sparrow_permission_command_setup(**kwargs):
         license='BSD License',
         description='Sparrow internal use, register APIS to Auth Centre',
         long_description=description,
-        url='https://github.com/axnsan12/drf-yasg',
+        url='https://github.com/wangbl11/sparrow_permission_command.git',
         author='tina.wang',
         author_email='wangbl11@qq.com',
         keywords='drf django django-rest-framework schema swagger openapi codegen swagger-codegen '
-                 'documentation drf-yasg django-rest-swagger drf-openapi sparrow',
+                 'documentation django-rest-swagger drf-openapi sparrow',
         python_requires=python_requires,
         classifiers=[
             'Intended Audience :: Developers',

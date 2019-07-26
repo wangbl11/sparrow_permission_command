@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from django.utils.module_loading import import_string
 from rest_framework.settings import api_settings
 import requests
-
+import traceback
 
 class Command(BaseCommand):
     help = '实时注册APIs到认证中心'
@@ -26,6 +26,12 @@ class Command(BaseCommand):
             help='指定django的版本，可选值为1或2。如果django版本>=1.11,请选择2'
         )
 
+        parser.add_argument(
+            '-l', '--local', dest='local',
+            default="0", choices=["0","1"],
+            help='指定是不是permission本地导入，换句话说就是可以直接访问到permission自己的数据库'
+        )
+
     def get_api_name(self, _paths, path, _method):
         # 获得权限的名字，从description中取前60个字符
         _api = _paths[path][_method]
@@ -36,10 +42,20 @@ class Command(BaseCommand):
             _name = _name[0:60]
         return _name
 
-    def register(self, schema, auth_centre, upd):
+    def register(self, schema, auth_centre,local, upd):
         try:
             #print(schema)
-            if auth_centre:
+            _not_local=not local
+            if local:
+                try:
+                    from auth_api.repository import PermissionRepository
+                    PermissionRepository.batch_by_schema(schema, upd)
+                except Exception as e:
+                    traceback.print_exc()
+                    print("导入时发生错误")
+                    _not_local=True
+
+            if _not_local and auth_centre:
                 r = requests.post(auth_centre, data={
                     "schema": json.dumps(schema),
                     "upd": upd
@@ -49,9 +65,10 @@ class Command(BaseCommand):
                 else:
                     print("注册API失败")
             else:
-                print("未指定AUTH_CENTRE")
+                if _not_local:
+                   print("未指定AUTH_CENTRE")
         except Exception as e:
-            import traceback
+
             traceback.print_exc()
             print("issue")
 
@@ -66,7 +83,7 @@ class Command(BaseCommand):
     def get_schema(self, generator, request, public):
         return generator.get_schema(request=request, public=public)
 
-    def handle(self, auth_centre, dj_ver, *args, **kwargs):
+    def handle(self, auth_centre, dj_ver,local, *args, **kwargs):
         # disable logs of WARNING and below
         logging.disable(logging.WARNING)
 
@@ -79,4 +96,8 @@ class Command(BaseCommand):
         schema = self.get_schema(generator, None, True)
         if not auth_centre:
             auth_centre=settings.AUTH_CENTRE
-        self.register(schema, auth_centre, upd=True)
+        if local=="0":
+            _local=False
+        else:
+            _local=True
+        self.register(schema, auth_centre, local=_local,upd=True)
